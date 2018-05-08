@@ -5,15 +5,16 @@
 
     public class Program {
         public static async Task Main(string[] args) {
-            var geoLocationServiceUrl = "http://ip-api.com/json/{0}?fields=country&lang=en";
+            var serviceUrl = "https://get.geojs.io/v1/ip/country/full/{0}";
+
             using (var client = new TorClient(new TorOptions { Password = "<Your Password Here>" })) {
-                for (;;){
-                    await client.TorControl.RenewIpAddress();
-                    Console.WriteLine(await client.Http.GetStringAsync(string.Format(
-                        geoLocationServiceUrl,
-                        client.IpAddress))
-                    );
-                }
+                await client.TorControl.RenewIpAddress();
+
+                var location = await client.Http.GetStringAsync(string.Format(
+                    serviceUrl,
+                    client.IpAddress));
+
+                Console.WriteLine(location);
             }
         }
     }
