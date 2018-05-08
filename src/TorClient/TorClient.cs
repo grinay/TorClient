@@ -12,7 +12,6 @@ namespace TorClient {
     using global::TorClient.Options;
 
     public class TorClient : ITorClient {
-        private string _ipAddress = string.Empty;
 
         public TorClient(TorOptions options) {
             Options = options ?? throw new ArgumentNullException(nameof(options));
@@ -32,40 +31,26 @@ namespace TorClient {
         public TorOptions Options { get; }
         public ITorControl TorControl { get; }
 
-        public string IpAddress {
-            get {
-                if (!string.IsNullOrEmpty(_ipAddress)) return _ipAddress;
-
-                return _ipAddress = GetIpAddress().Result;
-            }
-        }
+        public string IpAddress => GetIpAddress().Result;
 
         public void Dispose() => Http.Dispose();
 
-        protected async Task<string> RenewIpAddress() {
-            for (;;) {
-                using (var socket = new Socket(
-                    socketType: SocketType.Stream, 
-                    protocolType: ProtocolType.Tcp,
-                    addressFamily: AddressFamily.InterNetwork)) {
+        protected async Task RenewIpAddress() {
+            using (var socket = new Socket(
+                socketType: SocketType.Stream, 
+                protocolType: ProtocolType.Tcp,
+                addressFamily: AddressFamily.InterNetwork)) {
 
-                    await socket.ConnectAsync(new IPEndPoint(port: Options.ControlPort,
-                        address: IPAddress.Parse(Options.TorIpAddress)));
+                await socket.ConnectAsync(new IPEndPoint(port: Options.ControlPort,
+                    address: IPAddress.Parse(Options.TorIpAddress)));
 
-                    await SendAuthenticate(socket);
-                    await SendRenewClientCircuits(socket);
-                    await SendQuit(socket);
-                }
-
-                await Task.Delay(Options.RenewalDelay);
-
-                var newIpAddress = await GetIpAddress();
-                if (!_ipAddress.Equals(newIpAddress, StringComparison.OrdinalIgnoreCase))
-                    return _ipAddress = newIpAddress;
+                await SendAuthenticate(socket);
+                await SendRenewClientCircuits(socket);
+                await SendQuit(socket);
             }
         }
 
-        public async Task<string> GetIpAddress() => await Http.GetStringAsync(Options.IpServiceUrl);
+        private async Task<string> GetIpAddress() => await Http.GetStringAsync(Options.IpServiceUrl);
 
         private static async Task SendQuit(Socket socket) => await Send(socket, TorCommands.QUIT);
 
@@ -108,7 +93,7 @@ namespace TorClient {
             public void Dispose() {
             }
 
-            public async Task<string> RenewIpAddress() => await _client.RenewIpAddress();
+            public async Task RenewIpAddress() => await _client.RenewIpAddress();
         }
     }
 }
