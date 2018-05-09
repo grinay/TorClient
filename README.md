@@ -1,6 +1,21 @@
 # TorClient
-Just a lightweight Tor client written with C# with .net core and lot of :coffee: as usual. Make HTTP calls through a proxy as Privoxy that will fowards the requests by the Tor Network.
+Just a lightweight Tor client written in C# with .NET Core and lot of :coffee: as usual. Make HTTP calls through a proxy as Privoxy that will fowards the requests by the Tor Network.
 
+## Sample 
+
+```csharp 
+var serviceUrl = "https://get.geojs.io/v1/ip/country/full/{0}";
+
+using (var client = new TorClient(new TorOptions { Password = "<Your Password Here>" })) {
+    await client.TorControl.RenewIpAddress();
+
+    var location = await client.Http.GetStringAsync(string.Format(
+        serviceUrl,
+        client.IpAddress));
+
+    Console.WriteLine(location);
+}
+```
 ## Issues
 
 Follow development progress, report bugs and suggest features using [github issues](https://github.com/paulalves/TorClient/issues).
