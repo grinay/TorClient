@@ -3,6 +3,6 @@ namespace TorClient.Abstractions {
     using System.Threading.Tasks;
 
     public interface ITorControl : IDisposable {
-        Task RenewIpAddress();
+        Task RenewIpAddressAsync();
     }
 }

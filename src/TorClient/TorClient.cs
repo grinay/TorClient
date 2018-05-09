@@ -12,64 +12,70 @@ namespace TorClient {
     using global::TorClient.Options;
 
     public class TorClient : ITorClient {
+        private readonly Lazy<HttpClient> _httpClient;
 
         public TorClient(TorOptions options) {
             Options = options ?? throw new ArgumentNullException(nameof(options));
 
-            Http = new HttpClient(
-                new HttpClientHandler {
-                    UseProxy = true,
-                    Proxy = new WebProxy(
-                        options.TorIpAddress,
-                        options.ProxyPort)
-                }, true);
+            _httpClient = new Lazy<HttpClient>(() =>
+                new HttpClient(
+                    new HttpClientHandler {
+                        UseProxy = true,
+                        Proxy = new WebProxy(
+                            options.TorIpAddress,
+                            options.ProxyPort)
+                    }, true));
 
             TorControl = new TorControlAdapter(this);
         }
 
-        public HttpClient Http { get; }
         public TorOptions Options { get; }
         public ITorControl TorControl { get; }
+        public HttpClient Http => _httpClient.Value;
+        public string IpAddress => GetIpAddressAsync().Result;
 
-        public string IpAddress => GetIpAddress().Result;
+        public void Dispose() {
+            if (!_httpClient.IsValueCreated) return;
 
-        public void Dispose() => Http.Dispose();
+            Http.Dispose();
+        }
 
         protected async Task RenewIpAddress() {
             using (var socket = new Socket(
-                socketType: SocketType.Stream, 
+                socketType: SocketType.Stream,
                 protocolType: ProtocolType.Tcp,
                 addressFamily: AddressFamily.InterNetwork)) {
-
                 await socket.ConnectAsync(new IPEndPoint(port: Options.ControlPort,
-                    address: IPAddress.Parse(Options.TorIpAddress)));
+                    address: IPAddress.Parse(Options.TorIpAddress))).ConfigureAwait(false);
 
-                await SendAuthenticate(socket);
-                await SendRenewClientCircuits(socket);
-                await SendQuit(socket);
+                await SendAuthenticateAsync(socket).ConfigureAwait(false);
+                await SendRenewClientCircuitsAsync(socket).ConfigureAwait(false);
+                await SendQuitAsync(socket).ConfigureAwait(false);
             }
         }
 
-        private async Task<string> GetIpAddress() => await Http.GetStringAsync(Options.IpServiceUrl);
+        private Task<string> GetIpAddressAsync() => Http.GetStringAsync(Options.IpServiceUrl);
 
-        private static async Task SendQuit(Socket socket) => await Send(socket, TorCommands.QUIT);
+        private static Task SendQuitAsync(Socket socket) => SendAsync(socket, TorCommands.QUIT);
 
-        private static async Task SendRenewClientCircuits(Socket socket) => await Send(socket, TorCommands.RENEWCLIENTCIRCUITS);
+        private static Task SendRenewClientCircuitsAsync(Socket socket) =>
+            SendAsync(socket, TorCommands.RENEWCLIENTCIRCUITS);
 
-        private async Task SendAuthenticate(Socket socket) => await Send(socket, $"{TorCommands.AUTHENTICATE} \"{Options.Password}\"\n");
+        private Task SendAuthenticateAsync(Socket socket) =>
+            SendAsync(socket, $"{TorCommands.AUTHENTICATE} \"{Options.Password}\"\n");
 
-        private static async Task Send(Socket socket, string commandText) {
+        private static async Task SendAsync(Socket socket, string commandText) {
             var buffer = new byte[256];
 
             var command = Encoding.ASCII.GetBytes($"{commandText}\n");
 
-            await socket.SendAsync(new ArraySegment<byte>(command), SocketFlags.Peek);
+            await socket.SendAsync(new ArraySegment<byte>(command), SocketFlags.Peek).ConfigureAwait(false);
 
-            await socket.ReceiveAsync(new ArraySegment<byte>(buffer), SocketFlags.Peek);
+            await socket.ReceiveAsync(new ArraySegment<byte>(buffer), SocketFlags.Peek).ConfigureAwait(false);
 
             using (var memoryStream = new MemoryStream(buffer))
-            using (var streamReader = new StreamReader(memoryStream)) 
-                EnsureSuccessStatusCode(await streamReader.ReadLineAsync());
+            using (var streamReader = new StreamReader(memoryStream))
+                EnsureSuccessStatusCode(await streamReader.ReadLineAsync().ConfigureAwait(false));
         }
 
         private static bool IsSuccessStatusCode(string statusCode) {
@@ -91,9 +97,10 @@ namespace TorClient {
             }
 
             public void Dispose() {
+                /* nothing to do here. */
             }
 
-            public async Task RenewIpAddress() => await _client.RenewIpAddress();
+            public Task RenewIpAddressAsync() => _client.RenewIpAddress();
         }
     }
 }
