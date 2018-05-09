@@ -9,7 +9,7 @@ Just a lightweight Tor client written in C# with .NET Core and lot of :coffee: a
 var serviceUrl = "https://get.geojs.io/v1/ip/country/full/{0}";
 
 using (var client = new TorClient(new TorOptions { Password = "<Your Password Here>" })) {
-    await client.TorControl.RenewIpAddress();
+    await client.TorControl.RenewIpAddressAsync();
 
     var location = await client.Http.GetStringAsync(string.Format(
         serviceUrl,
