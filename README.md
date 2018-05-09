@@ -1,4 +1,6 @@
 # TorClient
+[![Build status](https://ci.appveyor.com/api/projects/status/5e1umwa6jpqi9skr/branch/master?svg=true)](https://ci.appveyor.com/project/paulalves/torclient/branch/master)
+
 Just a lightweight Tor client written in C# with .NET Core and lot of :coffee: as usual. Make HTTP calls through a proxy as Privoxy that will fowards the requests by the Tor Network.
 
 ## Sample 
