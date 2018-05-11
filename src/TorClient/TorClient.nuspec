@@ -1,0 +1,16 @@
+﻿<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>TorClient</id>
+    <version>0.0.1-beta</version>
+    <title>TorClient</title>
+    <authors>phgalves@outlook.com</authors>
+    <owners>Paul Alves</owners>
+    <projectUrl>https://github.com/paulalves/TorClient/</projectUrl>
+    <licenseUrl>https://github.com/paulalves/TorClient/blob/master/LICENSE</licenseUrl>
+    <description>Make HTTP calls through a proxy as Privoxy that will fowards the requests by the Tor Network.</description>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <tags>tor proxy privoxy network onion</tags>
+  </metadata>
+</package>
+

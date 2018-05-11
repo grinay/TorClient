@@ -5,6 +5,5 @@ namespace TorClient.Abstractions {
     public interface ITorClient : IDisposable {
         HttpClient Http { get; }
         string IpAddress { get; }
-        ITorControl TorControl { get; }
     }
 }
